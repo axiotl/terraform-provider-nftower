@@ -11,8 +11,8 @@ provider "nftower" {
   token = "eyJ0aWQiOiA0MjIwfS4yYzNlMmQ5NTI5MTVjODllNjIxMDU1ZGJjYWY5Y2IyZTNmOGU0Y2Rk"
 }
 
-resource "nftower_compute_env" "e" {
-  name           = "test1"
+resource "nftower_compute_env" "my_env" {
+  name           = "myenv"
   workspace_id   = "197562422694202"
   credentials_id = "7Y9dwU2JKHwuASqOdDLJ77"
   config = {
@@ -20,6 +20,9 @@ resource "nftower_compute_env" "e" {
     region   = "us-east-1"
     work_dir = "s3://convergence-default-data"
     forge = {
+      type           = "EC2"
+      vpc_id         = "vpc-c3eed5b9"
+      subnets        = ["subnet-0114aa4a598a2b8f2"]
       fusion_enabled = true
       min_cpus       = 0
       max_cpus       = 512
@@ -28,6 +31,6 @@ resource "nftower_compute_env" "e" {
 }
 
 
-output "test" {
-  value = nftower_compute_env.e
+output "my_env_id" {
+  value = nftower_compute_env.my_env.id
 }

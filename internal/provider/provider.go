@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"terraform-provider-nftower/internal/provider/client"
-	nftower_client "terraform-provider-nftower/internal/provider/client"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -31,7 +30,7 @@ type provider struct {
 	// testing.
 	version string
 
-	client *nftower_client.Client
+	client *client.Client
 }
 
 // providerData can be used to store data from the Terraform configuration.

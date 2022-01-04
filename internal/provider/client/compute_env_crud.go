@@ -179,6 +179,7 @@ func (client *Client) ReadComputeEnv(computeEnvId string, workspaceId string) (*
 
 // UpdateComputeEnv
 func (client *Client) UpdateComputeEnv(computeEnvId string, env CreateComputeEnvPayload, workspaceId string) (*models.ComputeEnv, error) {
+	fmt.Printf("id: %s\n", computeEnvId)
 	// in order to update compute env, we need to delete it first
 	fmt.Println("deleting compute env")
 	err := client.DeleteComputeEnv(computeEnvId, workspaceId)
@@ -205,6 +206,7 @@ func (client *Client) UpdateComputeEnv(computeEnvId string, env CreateComputeEnv
 
 // delete compute env
 func (client *Client) DeleteComputeEnv(computeEnvId string, workspaceId string) error {
+	fmt.Printf("id: %s\n", computeEnvId)
 	endpoint := fmt.Sprintf("%s/compute-envs/%s?workspaceId=%s", client.HostURL, computeEnvId, workspaceId)
 	fmt.Println("endpoint: ", endpoint)
 	req, err := http.NewRequest("DELETE", endpoint, nil)

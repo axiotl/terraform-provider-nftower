@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"terraform-provider-nftower/internal/provider/client"
+	"terraform-provider-nftower/internal/provider/models"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -99,8 +100,12 @@ func (t computeEnvResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, di
 						Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
 							"type": {
 								Type:     types.StringType,
-								Computed: true,
-								Optional: true,
+								Required: true,
+								Validators: []tfsdk.AttributeValidator{
+									enumValidator{
+										allowedValues: []string{"SPOT", "EC2"},
+									},
+								},
 							},
 							"min_cpus": {
 								Type:     types.Int64Type,
@@ -133,6 +138,11 @@ func (t computeEnvResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, di
 								Type:     types.StringType,
 								Computed: true,
 								Optional: true,
+								Validators: []tfsdk.AttributeValidator{
+									enumValidator{
+										allowedValues: []string{"BEST_FIT", "BEST_FIT_PROGRESSIVE", "SPOT_CAPACITY_OPTIMIZED"},
+									},
+								},
 							},
 							"image_id": {
 								Type:     types.StringType,
@@ -320,6 +330,101 @@ func (r computeEnvResource) Create(ctx context.Context, req tfsdk.CreateResource
 				CliPath:         "/home/ec2-user/miniconda/bin/aws",
 
 				Forge: client.CreateComputeEnvForge{
+					Type:              data.Config.Forge.Type.Value,
+					MinCpus:           data.Config.Forge.MinCpus.Value,
+					MaxCpus:           data.Config.Forge.MaxCpus.Value,
+					GpuEnabled:        data.Config.Forge.GpuEnabled.Value,
+					EbsAutoScale:      data.Config.Forge.EbsAutoScale.Value,
+					AllowBuckets:      stringTypeArrayToStringArray(data.Config.Forge.AllowBuckets),
+					DisposeOnDeletion: data.Config.Forge.DisposeOnDeletion.Value,
+					InstanceTypes:     stringTypeArrayToStringArray(data.Config.Forge.InstanceTypes),
+					AllocStrategy:     data.Config.Forge.AllocStrategy.Value,
+					VpcID:             data.Config.Forge.VpcID.Value,
+					Subnets:           stringTypeArrayToStringArray(data.Config.Forge.Subnets),
+					FusionEnabled:     data.Config.Forge.FusionEnabled.Value,
+					EfsCreate:         data.Config.Forge.EfsCreate.Value,
+					FsxMode:           "None",
+					EfsMode:           "None",
+				},
+				ConfigMode: "Batch Forge",
+			},
+		},
+	}
+	newComputeEnv, err := r.provider.client.CreateComputeEnv(payload, data.WorkspaceID.Value)
+
+	if err != nil {
+		resp.Diagnostics.AddError("Error creating new compute env", err.Error())
+		return
+	}
+
+	createResource(&data, newComputeEnv)
+
+	tflog.Trace(ctx, "created a resource")
+
+	diags = resp.State.Set(ctx, data)
+	resp.Diagnostics.Append(diags...)
+}
+
+func (r computeEnvResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+	var data computeEnvResourceData
+
+	diags := req.State.Get(ctx, &data)
+	resp.Diagnostics.Append(diags...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	computeEnv, err := r.provider.client.ReadComputeEnv(data.Id.Value, data.WorkspaceID.Value)
+	if err != nil {
+		resp.Diagnostics.AddError("Error reading compute env", err.Error())
+		return
+	}
+	fmt.Printf("computeEnv: %+v", computeEnv)
+
+	err = createResource(&data, computeEnv)
+	fmt.Printf("data: %+v", data)
+	if err != nil {
+		resp.Diagnostics.AddError("error converting api response to resource data", err.Error())
+		return
+	}
+
+	diags = resp.State.Set(ctx, data)
+	resp.Diagnostics.Append(diags...)
+}
+
+func (r computeEnvResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+	var data computeEnvResourceData
+
+	diags := req.Config.Get(ctx, &data)
+	resp.Diagnostics.Append(diags...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var currentState computeEnvResourceData
+
+	diags = req.State.Get(ctx, &currentState)
+	resp.Diagnostics.Append(diags...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	payload := client.CreateComputeEnvPayload{
+		ComputeEnv: client.CreateComputeEnvComputeEnv{
+			Name:          data.Name.Value,
+			Platform:      "aws-batch",
+			CredentialsID: data.CredentialsID.Value,
+
+			Config: client.CreateComputeEnvConfig{
+				Region:          data.Config.Region.Value,
+				WorkDir:         data.Config.WorkDir.Value,
+				HeadJobMemoryMb: data.Config.HeadJobMemoryMb.Value,
+				CliPath:         "/home/ec2-user/miniconda/bin/aws",
+
+				Forge: client.CreateComputeEnvForge{
 					Type:              "EC2",
 					MinCpus:           data.Config.Forge.MinCpus.Value,
 					MaxCpus:           data.Config.Forge.MaxCpus.Value,
@@ -341,9 +446,8 @@ func (r computeEnvResource) Create(ctx context.Context, req tfsdk.CreateResource
 		},
 	}
 	fmt.Printf("payload: %+v", payload)
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	newComputeEnv, err := r.provider.client.CreateComputeEnv(payload, data.WorkspaceID.Value)
+
+	newComputeEnv, err := r.provider.client.UpdateComputeEnv(currentState.Id.Value, payload, data.WorkspaceID.Value)
 
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating new compute env", err.Error())
@@ -352,126 +456,14 @@ func (r computeEnvResource) Create(ctx context.Context, req tfsdk.CreateResource
 
 	fmt.Printf("newComputeEnv: %+v", *newComputeEnv)
 
-	// For the purposes of this example code, hardcoding a response value to
-	// save into the Terraform state.
-	newComputeEnvResource := computeEnvResourceData{
-		Id:          types.String{Value: newComputeEnv.ID},
-		Name:        types.String{Value: newComputeEnv.Name},
-		WorkspaceID: data.WorkspaceID,
-		Config: computeEnvResourceDataConfig{
-			Region:          types.String{Value: newComputeEnv.Config.Region},
-			ComputeQueue:    types.String{Value: newComputeEnv.Config.ComputeQueue},
-			ComputeJobRole:  types.String{Value: newComputeEnv.Config.ComputeJobRole},
-			HeadQueue:       types.String{Value: newComputeEnv.Config.HeadQueue},
-			HeadJobRole:     types.String{Value: newComputeEnv.Config.HeadJobRole},
-			CliPath:         types.String{Value: newComputeEnv.Config.CliPath},
-			WorkDir:         types.String{Value: newComputeEnv.Config.WorkDir},
-			PreRunScript:    types.String{Value: newComputeEnv.Config.PreRunScript},
-			PostRunScript:   types.String{Value: newComputeEnv.Config.PostRunScript},
-			HeadJobCpus:     types.String{Value: newComputeEnv.Config.HeadJobCpus},
-			HeadJobMemoryMb: types.String{Value: newComputeEnv.Config.HeadJobMemoryMb},
-			// Environment:     newComputeEnv.Config.Environment,
-			Forge: computeEnvResourceDataForge{
-				Type:              types.String{Value: newComputeEnv.Config.Forge.Type},
-				MinCpus:           types.Int64{Value: newComputeEnv.Config.Forge.MinCpus},
-				MaxCpus:           types.Int64{Value: newComputeEnv.Config.Forge.MaxCpus},
-				GpuEnabled:        types.Bool{Value: newComputeEnv.Config.Forge.GpuEnabled},
-				EbsAutoScale:      types.Bool{Value: newComputeEnv.Config.Forge.EbsAutoScale},
-				InstanceTypes:     []types.String{},
-				AllocStrategy:     types.String{Value: newComputeEnv.Config.Forge.AllocStrategy},
-				VpcID:             types.String{Value: newComputeEnv.Config.Forge.VpcID},
-				Subnets:           []types.String{},
-				FusionEnabled:     types.Bool{Value: newComputeEnv.Config.Forge.FusionEnabled},
-				SecurityGroups:    []types.String{},
-				FsxMount:          types.String{Value: newComputeEnv.Config.Forge.FsxMount},
-				FsxName:           types.String{Value: newComputeEnv.Config.Forge.FsxName},
-				FsxSize:           types.String{Value: newComputeEnv.Config.Forge.FsxSize},
-				DisposeOnDeletion: types.Bool{Value: newComputeEnv.Config.Forge.DisposeOnDeletion},
-				EfsCreate:         types.Bool{Value: newComputeEnv.Config.Forge.EfsCreate},
-				Ec2KeyPair:        types.String{Value: newComputeEnv.Config.Forge.Ec2KeyPair},
-				AllowBuckets:      []types.String{},
-				EbsBlockSize:      types.String{Value: newComputeEnv.Config.Forge.EbsBlockSize},
-				BidPercentage:     types.String{Value: newComputeEnv.Config.Forge.BidPercentage},
-				EfsID:             types.String{Value: newComputeEnv.Config.Forge.EfsID},
-				EfsMount:          types.String{Value: newComputeEnv.Config.Forge.EfsMount},
-			},
-			// ForgedResources: newComputeEnv.Config.ForgedResources,
-			Discriminator: types.String{Value: newComputeEnv.Config.Discriminator},
-		},
-	}
-	fmt.Printf("newComputeEnvResource: %+v", newComputeEnvResource)
-
-	// write logs using the tflog package
-	// see https://pkg.go.dev/github.com/hashicorp/terraform-plugin-log/tflog
-	// for more information
-	tflog.Trace(ctx, "created a resource")
-
-	diags = resp.State.Set(ctx, newComputeEnvResource)
-	resp.Diagnostics.Append(diags...)
-}
-
-func (r computeEnvResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
-	var data computeEnvResourceData
-
-	diags := req.State.Get(ctx, &data)
-	resp.Diagnostics.Append(diags...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	computeEnv, err := r.provider.client.ReadComputeEnv(data.Id.Value, data.WorkspaceID.Value)
+	err = createResource(&data, newComputeEnv)
+	fmt.Printf("data: %+v", data)
 	if err != nil {
-		resp.Diagnostics.AddError("Error reading compute env", err.Error())
-		return
-	}
-	fmt.Printf("computeEnv: %+v", computeEnv)
-
-	computeEnvResource := computeEnvResourceData{
-		Id:   types.String{Value: computeEnv.ID},
-		Name: types.String{Value: computeEnv.Name},
-		Config: computeEnvResourceDataConfig{
-			Region:          types.String{Value: computeEnv.Config.Region},
-			ComputeQueue:    types.String{Value: computeEnv.Config.ComputeQueue},
-			ComputeJobRole:  types.String{Value: computeEnv.Config.ComputeJobRole},
-			HeadQueue:       types.String{Value: computeEnv.Config.HeadQueue},
-			HeadJobRole:     types.String{Value: computeEnv.Config.HeadJobRole},
-			CliPath:         types.String{Value: computeEnv.Config.CliPath},
-			WorkDir:         types.String{Value: computeEnv.Config.WorkDir},
-			PreRunScript:    types.String{Value: computeEnv.Config.PreRunScript},
-			PostRunScript:   types.String{Value: computeEnv.Config.PostRunScript},
-			HeadJobCpus:     types.String{Value: computeEnv.Config.HeadJobCpus},
-			HeadJobMemoryMb: types.String{Value: computeEnv.Config.HeadJobMemoryMb},
-			// Environment:     newComputeEnv.Config.Environment,
-			// Forge:           newComputeEnv.Config.Forge,
-			// ForgedResources: newComputeEnv.Config.ForgedResources,
-			Discriminator: types.String{Value: computeEnv.Config.Discriminator},
-		},
-	}
-
-	diags = resp.State.Set(ctx, computeEnvResource)
-	resp.Diagnostics.Append(diags...)
-}
-
-func (r computeEnvResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
-	var data computeEnvResourceData
-
-	diags := req.Plan.Get(ctx, &data)
-	resp.Diagnostics.Append(diags...)
-
-	if resp.Diagnostics.HasError() {
+		resp.Diagnostics.AddError("error converting api response to resource data", err.Error())
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// example, err := d.provider.client.UpdateExample(...)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update example, got error: %s", err))
-	//     return
-	// }
-
-	diags = resp.State.Set(ctx, &data)
+	diags = resp.State.Set(ctx, data)
 	resp.Diagnostics.Append(diags...)
 }
 
@@ -485,13 +477,16 @@ func (r computeEnvResource) Delete(ctx context.Context, req tfsdk.DeleteResource
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// example, err := d.provider.client.DeleteExample(...)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete example, got error: %s", err))
-	//     return
-	// }
+	err := r.provider.client.DeleteComputeEnv(data.Id.Value, data.WorkspaceID.Value)
+	if err != nil {
+		resp.Diagnostics.AddError("Error reading compute env", err.Error())
+		return
+	}
+
+	if err != nil {
+		resp.Diagnostics.AddError("error converting api response to resource data", err.Error())
+		return
+	}
 
 	resp.State.RemoveResource(ctx)
 }
@@ -506,4 +501,60 @@ func stringTypeArrayToStringArray(in []types.String) []string {
 		out[i] = v.Value
 	}
 	return out
+}
+
+func stringArrayToStringTypeArray(in []string) []types.String {
+	out := make([]types.String, len(in))
+	for i, v := range in {
+		out[i] = types.String{Value: v}
+	}
+	return out
+}
+
+func createResource(data *computeEnvResourceData, computeEnv *models.ComputeEnv) error {
+	data.Id = types.String{Value: computeEnv.ID}
+	data.Name = types.String{Value: computeEnv.Name}
+
+	data.Config = computeEnvResourceDataConfig{
+		Region:          types.String{Value: computeEnv.Config.Region},
+		ComputeQueue:    types.String{Value: computeEnv.Config.ComputeQueue},
+		ComputeJobRole:  types.String{Value: computeEnv.Config.ComputeJobRole},
+		HeadQueue:       types.String{Value: computeEnv.Config.HeadQueue},
+		HeadJobRole:     types.String{Value: computeEnv.Config.HeadJobRole},
+		CliPath:         types.String{Value: computeEnv.Config.CliPath},
+		WorkDir:         types.String{Value: computeEnv.Config.WorkDir},
+		PreRunScript:    types.String{Value: computeEnv.Config.PreRunScript},
+		PostRunScript:   types.String{Value: computeEnv.Config.PostRunScript},
+		HeadJobCpus:     types.String{Value: computeEnv.Config.HeadJobCpus},
+		HeadJobMemoryMb: types.String{Value: computeEnv.Config.HeadJobMemoryMb},
+		// Environment:     newComputeEnv.Config.Environment,
+		Forge: computeEnvResourceDataForge{
+			Type:              types.String{Value: computeEnv.Config.Forge.Type},
+			MinCpus:           types.Int64{Value: computeEnv.Config.Forge.MinCpus},
+			MaxCpus:           types.Int64{Value: computeEnv.Config.Forge.MaxCpus},
+			GpuEnabled:        types.Bool{Value: computeEnv.Config.Forge.GpuEnabled},
+			EbsAutoScale:      types.Bool{Value: computeEnv.Config.Forge.EbsAutoScale},
+			InstanceTypes:     []types.String{},
+			AllocStrategy:     types.String{Value: computeEnv.Config.Forge.AllocStrategy},
+			VpcID:             types.String{Value: computeEnv.Config.Forge.VpcID},
+			Subnets:           stringArrayToStringTypeArray(computeEnv.Config.Forge.Subnets),
+			FusionEnabled:     types.Bool{Value: computeEnv.Config.Forge.FusionEnabled},
+			SecurityGroups:    []types.String{},
+			FsxMount:          types.String{Value: computeEnv.Config.Forge.FsxMount},
+			FsxName:           types.String{Value: computeEnv.Config.Forge.FsxName},
+			FsxSize:           types.String{Value: computeEnv.Config.Forge.FsxSize},
+			DisposeOnDeletion: types.Bool{Value: computeEnv.Config.Forge.DisposeOnDeletion},
+			EfsCreate:         types.Bool{Value: computeEnv.Config.Forge.EfsCreate},
+			Ec2KeyPair:        types.String{Value: computeEnv.Config.Forge.Ec2KeyPair},
+			AllowBuckets:      []types.String{},
+			EbsBlockSize:      types.String{Value: computeEnv.Config.Forge.EbsBlockSize},
+			BidPercentage:     types.String{Value: computeEnv.Config.Forge.BidPercentage},
+			EfsID:             types.String{Value: computeEnv.Config.Forge.EfsID},
+			EfsMount:          types.String{Value: computeEnv.Config.Forge.EfsMount},
+		},
+		// ForgedResources: newComputeEnv.Config.ForgedResources,
+		Discriminator: types.String{Value: computeEnv.Config.Discriminator},
+	}
+
+	return nil
 }
