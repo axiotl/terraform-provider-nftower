@@ -141,15 +141,13 @@ func (t computeEnvResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, di
 							},
 							"vpc_id": {
 								Type:     types.StringType,
-								Computed: true,
-								Optional: true,
+								Required: true,
 							},
 							"subnets": {
 								Type: types.ListType{
 									ElemType: types.StringType,
 								},
-								Computed: true,
-								Optional: true,
+								Required: true,
 							},
 							"security_groups": {
 								Type: types.ListType{

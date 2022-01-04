@@ -12,13 +12,17 @@ provider "nftower" {
 }
 
 resource "nftower_compute_env" "e" {
-  name         = "test1"
-  workspace_id = "197562422694202"
+  name           = "test1"
+  workspace_id   = "197562422694202"
+  credentials_id = "7Y9dwU2JKHwuASqOdDLJ77"
   config = {
+
     region   = "us-east-1"
     work_dir = "s3://convergence-default-data"
     forge = {
       fusion_enabled = true
+      min_cpus       = 0
+      max_cpus       = 512
     }
   }
 }

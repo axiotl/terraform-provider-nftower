@@ -5,6 +5,6 @@ provider "hashicorp.com/edu/nftower" {
   version     = "0.2.0"
   constraints = "0.2.0"
   hashes = [
-    "h1:c8L0snUZQMlSUeA2ILlUdviYYB0chztGfuiKR5QEpSE=",
+    "h1:VYFTkx52vbpfYFGP603vbebGFuiX3gFkinCvDQp9n6Y=",
   ]
 }
