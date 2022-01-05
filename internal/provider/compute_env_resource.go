@@ -315,7 +315,7 @@ func (r computeEnvResource) Create(ctx context.Context, req tfsdk.CreateResource
 		return
 	}
 
-	fmt.Printf("data: %+v", data)
+	fmt.Printf("config data: %+v", data)
 
 	payload := client.CreateComputeEnvPayload{
 		ComputeEnv: client.CreateComputeEnvComputeEnv{
@@ -423,9 +423,9 @@ func (r computeEnvResource) Update(ctx context.Context, req tfsdk.UpdateResource
 				WorkDir:         data.Config.WorkDir.Value,
 				HeadJobMemoryMb: data.Config.HeadJobMemoryMb.Value,
 				CliPath:         "/home/ec2-user/miniconda/bin/aws",
-
 				Forge: client.CreateComputeEnvForge{
-					Type:              "EC2",
+
+					Type:              data.Config.Forge.Type.Value,
 					MinCpus:           data.Config.Forge.MinCpus.Value,
 					MaxCpus:           data.Config.Forge.MaxCpus.Value,
 					GpuEnabled:        data.Config.Forge.GpuEnabled.Value,
@@ -500,6 +500,7 @@ func stringTypeArrayToStringArray(in []types.String) []string {
 	for i, v := range in {
 		out[i] = v.Value
 	}
+	fmt.Println(out)
 	return out
 }
 
@@ -534,19 +535,19 @@ func createResource(data *computeEnvResourceData, computeEnv *models.ComputeEnv)
 			MaxCpus:           types.Int64{Value: computeEnv.Config.Forge.MaxCpus},
 			GpuEnabled:        types.Bool{Value: computeEnv.Config.Forge.GpuEnabled},
 			EbsAutoScale:      types.Bool{Value: computeEnv.Config.Forge.EbsAutoScale},
-			InstanceTypes:     []types.String{},
+			InstanceTypes:     stringArrayToStringTypeArray(computeEnv.Config.Forge.InstanceTypes),
 			AllocStrategy:     types.String{Value: computeEnv.Config.Forge.AllocStrategy},
 			VpcID:             types.String{Value: computeEnv.Config.Forge.VpcID},
 			Subnets:           stringArrayToStringTypeArray(computeEnv.Config.Forge.Subnets),
 			FusionEnabled:     types.Bool{Value: computeEnv.Config.Forge.FusionEnabled},
-			SecurityGroups:    []types.String{},
+			SecurityGroups:    stringArrayToStringTypeArray(computeEnv.Config.Forge.SecurityGroups),
 			FsxMount:          types.String{Value: computeEnv.Config.Forge.FsxMount},
 			FsxName:           types.String{Value: computeEnv.Config.Forge.FsxName},
 			FsxSize:           types.String{Value: computeEnv.Config.Forge.FsxSize},
 			DisposeOnDeletion: types.Bool{Value: computeEnv.Config.Forge.DisposeOnDeletion},
 			EfsCreate:         types.Bool{Value: computeEnv.Config.Forge.EfsCreate},
 			Ec2KeyPair:        types.String{Value: computeEnv.Config.Forge.Ec2KeyPair},
-			AllowBuckets:      []types.String{},
+			AllowBuckets:      stringArrayToStringTypeArray(computeEnv.Config.Forge.AllowBuckets),
 			EbsBlockSize:      types.String{Value: computeEnv.Config.Forge.EbsBlockSize},
 			BidPercentage:     types.String{Value: computeEnv.Config.Forge.BidPercentage},
 			EfsID:             types.String{Value: computeEnv.Config.Forge.EfsID},
