@@ -327,6 +327,9 @@ func (r computeEnvResource) Create(ctx context.Context, req tfsdk.CreateResource
 				Region:          data.Config.Region.Value,
 				WorkDir:         data.Config.WorkDir.Value,
 				HeadJobMemoryMb: data.Config.HeadJobMemoryMb.Value,
+				HeadJobRole:     data.Config.HeadJobRole.Value,
+				ComputeJobRole:  data.Config.ComputeJobRole.Value,
+				HeadJobCpus:     data.Config.HeadJobCpus.Value,
 				CliPath:         "/home/ec2-user/miniconda/bin/aws",
 
 				Forge: client.CreateComputeEnvForge{
