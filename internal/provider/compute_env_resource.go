@@ -377,7 +377,8 @@ func (r computeEnvResource) Read(ctx context.Context, req tfsdk.ReadResourceRequ
 
 	computeEnv, err := r.provider.client.ReadComputeEnv(data.Id.Value, data.WorkspaceID.Value)
 	if err != nil {
-		resp.Diagnostics.AddError("Error reading compute env", err.Error())
+		// resp.Diagnostics.AddError("Error reading compute env", err.Error())
+		resp.State.Set(ctx, nil)
 		return
 	}
 	fmt.Printf("computeEnv: %+v", computeEnv)
@@ -419,12 +420,14 @@ func (r computeEnvResource) Update(ctx context.Context, req tfsdk.UpdateResource
 			CredentialsID: data.CredentialsID.Value,
 
 			Config: client.CreateComputeEnvConfig{
+				HeadJobCpus:     data.Config.HeadJobCpus.Value,
 				Region:          data.Config.Region.Value,
 				WorkDir:         data.Config.WorkDir.Value,
 				HeadJobMemoryMb: data.Config.HeadJobMemoryMb.Value,
+				ComputeJobRole:  data.Config.ComputeJobRole.Value,
+				HeadJobRole:     data.Config.HeadJobRole.Value,
 				CliPath:         "/home/ec2-user/miniconda/bin/aws",
 				Forge: client.CreateComputeEnvForge{
-
 					Type:              data.Config.Forge.Type.Value,
 					MinCpus:           data.Config.Forge.MinCpus.Value,
 					MaxCpus:           data.Config.Forge.MaxCpus.Value,
