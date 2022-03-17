@@ -103,24 +103,24 @@ type computeEnvDataSourceData struct {
 	// Config computeEnvConfigDataSourceData `tfsdk:"config"`
 }
 
-type computeEnvConfigDataSourceData struct {
-	Region         types.String `json:"region" tfsdk:"region"`
-	ComputeQueue   types.String `json:"computeQueue" tfsdk:"compute_queue" `
-	ComputeJobRole types.String `json:"computeJobRole" tfsdk:"compute_job_role"`
-	HeadQueue      types.String `json:"headQueue" tfsdk:"head_queue"`
-	HeadJobRole    types.String `json:"headJobRole" tfsdk:"head_job_role"`
-	CliPath        types.String `json:"cliPath" tfsdk:"cli_path"`
-	// Volumes         []types.String `json:"volumes" tfsdk:"volumes"`
-	WorkDir         types.String `json:"workDir" tfsdk:"work_dir"`
-	PreRunScript    types.String `json:"preRunScript" tfsdk:"pre_run_script"`
-	PostRunScript   types.String `json:"postRunScript" tfsdk:"post_run_script"`
-	HeadJobCpus     types.String `json:"headJobCpus" tfsdk:"head_job_cpus"`
-	HeadJobMemoryMb types.String `json:"headJobMemoryMb" tfsdk:"head_job_memory_mb"`
-	// Environment     []Environment     `json:"environment" tfsdk:"environment"`
-	// Forge           Forge             `json:"forge" tfsdk:"forge"`
-	// ForgedResources map[types.String]types.String `json:"forgedResources" tfsdk:"forged_resources"`
-	Discriminator types.String `json:"discriminator" tfsdk:"discriminator"`
-}
+// type computeEnvConfigDataSourceData struct {
+// 	Region         types.String `json:"region" tfsdk:"region"`
+// 	ComputeQueue   types.String `json:"computeQueue" tfsdk:"compute_queue" `
+// 	ComputeJobRole types.String `json:"computeJobRole" tfsdk:"compute_job_role"`
+// 	HeadQueue      types.String `json:"headQueue" tfsdk:"head_queue"`
+// 	HeadJobRole    types.String `json:"headJobRole" tfsdk:"head_job_role"`
+// 	CliPath        types.String `json:"cliPath" tfsdk:"cli_path"`
+// 	// Volumes         []types.String `json:"volumes" tfsdk:"volumes"`
+// 	WorkDir         types.String `json:"workDir" tfsdk:"work_dir"`
+// 	PreRunScript    types.String `json:"preRunScript" tfsdk:"pre_run_script"`
+// 	PostRunScript   types.String `json:"postRunScript" tfsdk:"post_run_script"`
+// 	HeadJobCpus     types.String `json:"headJobCpus" tfsdk:"head_job_cpus"`
+// 	HeadJobMemoryMb types.String `json:"headJobMemoryMb" tfsdk:"head_job_memory_mb"`
+// 	// Environment     []Environment     `json:"environment" tfsdk:"environment"`
+// 	// Forge           Forge             `json:"forge" tfsdk:"forge"`
+// 	// ForgedResources map[types.String]types.String `json:"forgedResources" tfsdk:"forged_resources"`
+// 	Discriminator types.String `json:"discriminator" tfsdk:"discriminator"`
+// }
 
 type computeEnvDataSource struct {
 	provider provider

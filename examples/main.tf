@@ -12,15 +12,15 @@ provider "nftower" {
 }
 
 resource "nftower_compute_env" "main" {
-  name           = "test"
+  name           = "test2"
   workspace_id   = var.nf_tower_workpace_id
   credentials_id = var.credentials_id
   config = {
-    compute_job_role = "alsdfjalsdkfj"
-    head_job_role    = "alsdkfalsdkjfalskdjf"
-
-    region   = "us-east-1"
-    work_dir = "s3://convergence-beta-run"
+    compute_job_role   = "alsdfjalsdkfj"
+    head_job_role      = "alsdkfalsdkjfalskdjf"
+    head_job_memory_mb = 128000
+    region             = "us-east-1"
+    work_dir           = "s3://convergence-beta-run"
     forge = {
       type           = "EC2"
       vpc_id         = var.vpc_id

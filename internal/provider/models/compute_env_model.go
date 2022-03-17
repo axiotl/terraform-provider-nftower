@@ -48,7 +48,7 @@ type Config struct {
 	PreRunScript    string            `json:"preRunScript" tfsdk:"pre_run_script"`
 	PostRunScript   string            `json:"postRunScript" tfsdk:"post_run_script"`
 	HeadJobCpus     string            `json:"headJobCpus" tfsdk:"head_job_cpus"`
-	HeadJobMemoryMb string            `json:"headJobMemoryMb" tfsdk:"head_job_memory_mb"`
+	HeadJobMemoryMb int64             `json:"headJobMemoryMb" tfsdk:"head_job_memory_mb"`
 	Environment     []Environment     `json:"environment" tfsdk:"environment"`
 	Forge           Forge             `json:"forge" tfsdk:"forge"`
 	ForgedResources map[string]string `json:"forgedResources" tfsdk:"forged_resources"`

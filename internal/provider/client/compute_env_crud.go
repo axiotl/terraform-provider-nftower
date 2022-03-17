@@ -42,7 +42,7 @@ type CreateComputeEnvConfig struct {
 	ComputeJobRole  string                `json:"computeJobRole,omitempty"`
 	HeadJobRole     string                `json:"headJobRole,omitempty"`
 	HeadJobCpus     string                `json:"headJobCpus,omitempty"`
-	HeadJobMemoryMb string                `json:"headJobMemoryMb,omitempty"`
+	HeadJobMemoryMb int64                 `json:"headJobMemoryMb,omitempty"`
 	ConfigMode      string                `json:"configMode,omitempty"`
 	PreRunScript    string                `json:"preRunScript,omitempty"`
 	PostRunScript   string                `json:"postRunScript,omitempty"`
@@ -150,7 +150,7 @@ func (client *Client) CreateComputeEnv(env CreateComputeEnvPayload, workspaceId 
 		return nil, err
 	}
 	jsonData, err := json.Marshal(&newComputeEnv)
-	fmt.Println(string(jsonData))
+	fmt.Println("jsonData: ", string(jsonData))
 
 	if err != nil {
 		return nil, err

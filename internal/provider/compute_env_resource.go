@@ -91,7 +91,7 @@ func (t computeEnvResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, di
 						Optional: true,
 					},
 					"head_job_memory_mb": {
-						Type:     types.StringType,
+						Type:     types.Int64Type,
 						Computed: true,
 						Optional: true,
 					},
@@ -268,7 +268,7 @@ type computeEnvResourceDataConfig struct {
 	PreRunScript    types.String `json:"preRunScript" tfsdk:"pre_run_script"`
 	PostRunScript   types.String `json:"postRunScript" tfsdk:"post_run_script"`
 	HeadJobCpus     types.String `json:"headJobCpus" tfsdk:"head_job_cpus"`
-	HeadJobMemoryMb types.String `json:"headJobMemoryMb" tfsdk:"head_job_memory_mb"`
+	HeadJobMemoryMb types.Int64  `json:"headJobMemoryMb" tfsdk:"head_job_memory_mb"`
 	// Environment     []Environment     `json:"environment" tfsdk:"environment"`
 	Forge computeEnvResourceDataForge `json:"forge" tfsdk:"forge"`
 	// ForgedResources map[types.String]types.String `json:"forgedResources" tfsdk:"forged_resources"`
@@ -533,7 +533,7 @@ func createResource(data *computeEnvResourceData, computeEnv *models.ComputeEnv)
 		PreRunScript:    types.String{Value: computeEnv.Config.PreRunScript},
 		PostRunScript:   types.String{Value: computeEnv.Config.PostRunScript},
 		HeadJobCpus:     types.String{Value: computeEnv.Config.HeadJobCpus},
-		HeadJobMemoryMb: types.String{Value: computeEnv.Config.HeadJobMemoryMb},
+		HeadJobMemoryMb: types.Int64{Value: computeEnv.Config.HeadJobMemoryMb},
 		// Environment:     newComputeEnv.Config.Environment,
 		Forge: computeEnvResourceDataForge{
 			Type:              types.String{Value: computeEnv.Config.Forge.Type},
