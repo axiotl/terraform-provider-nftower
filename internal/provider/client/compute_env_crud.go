@@ -125,7 +125,7 @@ func (client *Client) CreateComputeEnv(env CreateComputeEnvPayload, workspaceId 
 		return nil, err
 	}
 
-	fmt.Printf("%+v\n", string(body))
+	fmt.Printf("Create Compute Env Payload: %+v\n", string(body))
 	endpoint := fmt.Sprintf("%s/compute-envs?workspaceId=%s", client.HostURL, workspaceId)
 	fmt.Println("endpoint: ", endpoint)
 

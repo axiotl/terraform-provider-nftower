@@ -389,6 +389,8 @@ func (r computeEnvResource) Read(ctx context.Context, req tfsdk.ReadResourceRequ
 	err = createResource(&data, computeEnv)
 	fmt.Printf("data: %+v", data)
 	if err != nil {
+		var path = tftypes.NewAttributePath().WithAttributeName("id")
+		resp.State.SetAttribute(ctx, path, "")
 		resp.Diagnostics.AddError("error converting api response to resource data", err.Error())
 		return
 	}

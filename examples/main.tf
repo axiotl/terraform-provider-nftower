@@ -18,7 +18,7 @@ resource "nftower_compute_env" "main" {
   config = {
     compute_job_role   = "alsdfjalsdkfj"
     head_job_role      = "alsdkfalsdkjfalskdjf"
-    head_job_memory_mb = 128000
+    head_job_memory_mb = 2048
     region             = "us-east-1"
     work_dir           = "s3://convergence-beta-run"
     forge = {
